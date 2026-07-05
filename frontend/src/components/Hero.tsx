@@ -5,9 +5,10 @@ const heroVideoSrc = 'https://interactive-examples.mdn.mozilla.net/media/cc0-vid
 
 type HeroProps = {
   isLoading?: boolean
+  onStartAssessment?: () => void
 }
 
-const Hero = ({ isLoading = false }: HeroProps) => {
+const Hero = ({ isLoading = false, onStartAssessment }: HeroProps) => {
   return (
     <section className="hero content-section" id="hero">
       <div className="hero-background" aria-hidden="true">
@@ -35,9 +36,9 @@ const Hero = ({ isLoading = false }: HeroProps) => {
           </p>
 
           <div className="hero-actions" id="assessment">
-            <a href="#assessment" className="hero-cta">
+            <button onClick={onStartAssessment} className="hero-cta">
               Start the assessment
-            </a>
+            </button>
             <span className="hero-microcopy">Takes about 10 minutes. Free to start.</span>
           </div>
 

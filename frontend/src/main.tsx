@@ -8,10 +8,12 @@ import HowItWorks from './components/HowItWorks'
 import LogoCloud from './components/LogoCloud'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import Assessment from './components/Assessment'
 import './style.css'
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
+  const [showAssessment, setShowAssessment] = useState(false)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -21,16 +23,26 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [])
 
+  const handleStartAssessment = () => {
+    setShowAssessment(true)
+  }
+
   return (
     <>
-      <Navbar />
+      <Navbar onStartAssessment={handleStartAssessment} />
       <main>
-        <Hero isLoading={isLoading} />
-        <LogoCloud isLoading={isLoading} />
-        <HowItWorks />
-        <Features />
-        <FAQ />
-        <Footer />
+        {showAssessment ? (
+          <Assessment />
+        ) : (
+          <>
+            <Hero isLoading={isLoading} onStartAssessment={handleStartAssessment} />
+            <LogoCloud isLoading={isLoading} />
+            <HowItWorks />
+            <Features />
+            <FAQ />
+            <Footer />
+          </>
+        )}
       </main>
     </>
   )

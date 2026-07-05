@@ -2,7 +2,11 @@ import { useState } from 'react'
 import logo from '../assets/pathfinder-logo.png'
 import './Navbar.css'
 
-const Navbar = () => {
+type NavbarProps = {
+  onStartAssessment?: () => void
+}
+
+const Navbar = ({ onStartAssessment }: NavbarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const toggleMenu = () => setIsMenuOpen((open) => !open)
@@ -27,9 +31,9 @@ const Navbar = () => {
           </a>
         </div>
 
-        <a href="#start" className="navbar-cta navbar-cta-desktop">
+        <button onClick={onStartAssessment} className="navbar-cta navbar-cta-desktop">
           Start assessment
-        </a>
+        </button>
 
         {isMenuOpen ? (
           <button
@@ -87,9 +91,9 @@ const Navbar = () => {
         <a href="#login" className="mobile-nav-link" onClick={closeMenu}>
           Log in
         </a>
-        <a href="#start" className="mobile-cta" onClick={closeMenu}>
+        <button onClick={() => { closeMenu(); onStartAssessment?.(); }} className="mobile-cta">
           Start assessment
-        </a>
+        </button>
       </div>
     </nav>
   )
