@@ -1,0 +1,159 @@
+.logo-cloud {
+  background:
+    linear-gradient(180deg, rgba(248, 245, 238, 0.98), rgba(236, 230, 219, 0.94)),
+    var(--bg);
+  padding: 4.5rem 0 5rem;
+  overflow: hidden;
+}
+
+.logo-cloud-container {
+  max-width: 1126px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.logo-loading-row {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.logo-skeleton-label {
+  width: 180px;
+  height: 18px;
+  margin: 0 auto;
+}
+
+.logo-skeleton-name {
+  width: 72px;
+  height: 12px;
+}
+
+.logo-loading-pill {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  min-width: 160px;
+  padding: 0.9rem 1rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.logo-loading-image {
+  width: 132px;
+  height: 40px;
+  border-radius: 16px;
+}
+
+.logo-cloud-label {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-h);
+  margin-bottom: 1.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.logo-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+}
+
+.logo-marquee-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: logo-scroll 34s linear infinite;
+  will-change: transform;
+}
+
+.logo-marquee-group {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  padding-right: 2.5rem;
+}
+
+.logo-item {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  min-width: 176px;
+  padding: 0.7rem 1rem 0.6rem;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 14px 30px rgba(17, 24, 39, 0.05);
+}
+
+.logo-image {
+  display: block;
+  width: auto;
+  height: 44px;
+  object-fit: contain;
+  max-width: 160px;
+}
+
+.logo-name {
+  font-size: 0.96rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-h);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.logo-item:hover {
+  transform: translateY(-1px);
+}
+
+@keyframes logo-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-marquee-track {
+    animation: none;
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .logo-cloud {
+    padding: 3rem 0 3.5rem;
+  }
+
+  .logo-cloud-label {
+    margin-bottom: 1.25rem;
+  }
+
+  .logo-marquee-group {
+    gap: 1rem;
+    padding-right: 1rem;
+  }
+
+  .logo-item {
+    min-width: 146px;
+    padding: 0.6rem 0.8rem 0.5rem;
+  }
+
+  .logo-image {
+    height: 38px;
+    max-width: 120px;
+  }
+
+  .logo-name {
+    font-size: 0.85rem;
+  }
+}
