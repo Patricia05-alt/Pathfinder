@@ -87,6 +87,34 @@
   color: rgba(0, 0, 0, 0.35);
 }
 
+.register-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.register-password-wrapper .register-input {
+  padding-right: 3rem;
+}
+
+.register-password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: var(--text);
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.register-password-toggle:hover {
+  color: var(--accent);
+}
+
 .register-error {
   font-size: 0.875rem;
   color: #dc2626;
