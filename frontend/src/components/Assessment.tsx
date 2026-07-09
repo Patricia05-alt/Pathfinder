@@ -1,5 +1,6 @@
 // src/components/Assessment.tsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Assessment.css';
 
 // Sample questions - replace with your actual AI-powered questions
@@ -50,8 +51,8 @@ const QUESTIONS = [
 ];
 
 const Assessment = () => {
+  const navigate = useNavigate();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [textInput, setTextInput] = useState("");
   const [isComplete, setIsComplete] = useState(false);
@@ -82,8 +83,8 @@ const Assessment = () => {
     // Add user answer to conversation
     setConversation(prev => [...prev, { sender: 'user', text: answer }]);
     
-    // Save answer
-    setAnswers(prev => ({ ...prev, [currentQuestion.id]: answer }));
+    // Save answer (will be sent to backend)
+    console.log('answer saved:', currentQuestion.id, answer);
 
     // Check if this is the last question
     if (currentQuestionIndex === QUESTIONS.length - 1) {
@@ -126,7 +127,7 @@ const Assessment = () => {
               We're matching your answers with careers and college majors that fit. 
               You'll see your personalized results in just a moment.
             </p>
-            <button className="assessment-btn assessment-btn-primary">
+            <button className="assessment-btn assessment-btn-primary" onClick={() => navigate('/dashboard')}>
               View my results
             </button>
           </div>

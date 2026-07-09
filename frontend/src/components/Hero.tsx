@@ -8,7 +8,7 @@ type HeroProps = {
   onStartAssessment?: () => void
 }
 
-const Hero = ({ isLoading = false, onStartAssessment }: HeroProps) => {
+const Hero = ({ onStartAssessment }: HeroProps) => {
   return (
     <section className="hero content-section" id="hero">
       <div className="hero-background" aria-hidden="true">

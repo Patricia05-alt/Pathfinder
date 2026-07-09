@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import logo from '../assets/pathfinder-logo.png'
 import './Navbar.css'
 
@@ -26,9 +27,9 @@ const Navbar = ({ onStartAssessment }: NavbarProps) => {
           <a href="#schools" className="nav-link">
             For schools
           </a>
-          <a href="#login" className="nav-link">
+          <Link to="/login" className="nav-link">
             Log in
-          </a>
+          </Link>
         </div>
 
         <button onClick={onStartAssessment} className="navbar-cta navbar-cta-desktop">
@@ -88,9 +89,9 @@ const Navbar = ({ onStartAssessment }: NavbarProps) => {
         <a href="#schools" className="mobile-nav-link" onClick={closeMenu}>
           For schools
         </a>
-        <a href="#login" className="mobile-nav-link" onClick={closeMenu}>
+        <Link to="/login" className="mobile-nav-link" onClick={closeMenu}>
           Log in
-        </a>
+        </Link>
         <button onClick={() => { closeMenu(); onStartAssessment?.(); }} className="mobile-cta">
           Start assessment
         </button>
