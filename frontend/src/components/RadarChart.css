@@ -1,0 +1,52 @@
+.radar {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 320px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.radar-ring {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.radar-axis {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  opacity: 0.45;
+}
+
+.radar-area {
+  fill-opacity: 0.18;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.radar-dot {
+  stroke: var(--surface-strong);
+  stroke-width: 2;
+  transition: r 0.15s ease;
+  cursor: default;
+}
+
+.radar-dot:hover {
+  r: 6;
+}
+
+.radar-label-name {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--text-h);
+}
+
+.radar-label-value {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--text);
+}

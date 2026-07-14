@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual envs (kept outside the repo)
+.venv/
+venv/
+
+# Secrets / local config
+.env
+.env.*
+*.local
+
+# Databases
+*.sqlite3
+*.db
+
+# Django
+*.log

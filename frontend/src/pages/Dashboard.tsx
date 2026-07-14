@@ -1,7 +1,19 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/pathfinder-logo.png'
+import CompatibilityGauge from '../components/CompatibilityGauge'
+import RadarChart from '../components/RadarChart'
+import { fetchCurrentUser, isAuthenticated, logout, type User } from '../lib/auth'
 import './Dashboard.css'
+
+// Derive up to two initials from an email's local part (no name field available).
+function getInitials(email: string): string {
+  const local = email.split('@')[0] ?? ''
+  const parts = local.split(/[.\-_+]/).filter(Boolean)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  if (local.length >= 2) return local.slice(0, 2).toUpperCase()
+  return (local[0] ?? '?').toUpperCase()
+}
 
 const CAREER_MATCHES = [
   {
@@ -15,6 +27,14 @@ const CAREER_MATCHES = [
     growthLabel: 'job growth by 2032',
     majors: ['Human-Computer Interaction', 'Graphic Design', 'Psychology', 'Information Systems'],
     dayInLife: 'Morning standup with the product team, afternoon user testing session, end of day reviewing design feedback in Figma.',
+    employmentProbability: 82,
+    dimensions: [
+      { label: 'Interests', value: 95 },
+      { label: 'Skills', value: 88 },
+      { label: 'Personality', value: 90 },
+      { label: 'Work style', value: 92 },
+      { label: 'Academics', value: 84 },
+    ],
   },
   {
     title: 'Software Engineer',
@@ -27,6 +47,14 @@ const CAREER_MATCHES = [
     growthLabel: 'job growth by 2032',
     majors: ['Computer Science', 'Software Engineering', 'Mathematics', 'Electrical Engineering'],
     dayInLife: 'Code review in the morning, building a new feature after lunch, deploying to production before end of day.',
+    employmentProbability: 90,
+    dimensions: [
+      { label: 'Interests', value: 86 },
+      { label: 'Skills', value: 92 },
+      { label: 'Personality', value: 78 },
+      { label: 'Work style', value: 80 },
+      { label: 'Academics', value: 90 },
+    ],
   },
   {
     title: 'Data Analyst',
@@ -39,6 +67,14 @@ const CAREER_MATCHES = [
     growthLabel: 'job growth by 2032',
     majors: ['Statistics', 'Data Science', 'Economics', 'Business Analytics'],
     dayInLife: 'Pulling a dataset in the morning, building a dashboard by noon, presenting findings to the marketing team in the afternoon.',
+    employmentProbability: 85,
+    dimensions: [
+      { label: 'Interests', value: 78 },
+      { label: 'Skills', value: 85 },
+      { label: 'Personality', value: 74 },
+      { label: 'Work style', value: 82 },
+      { label: 'Academics', value: 88 },
+    ],
   },
   {
     title: 'Product Manager',
@@ -51,6 +87,14 @@ const CAREER_MATCHES = [
     growthLabel: 'job growth by 2032',
     majors: ['Business Administration', 'Computer Science', 'Engineering Management', 'Communications'],
     dayInLife: 'Writing a product spec in the morning, syncing with engineering on priorities, reviewing analytics in the afternoon.',
+    employmentProbability: 79,
+    dimensions: [
+      { label: 'Interests', value: 80 },
+      { label: 'Skills', value: 72 },
+      { label: 'Personality', value: 88 },
+      { label: 'Work style', value: 78 },
+      { label: 'Academics', value: 76 },
+    ],
   },
   {
     title: 'Graphic Designer',
@@ -63,6 +107,14 @@ const CAREER_MATCHES = [
     growthLabel: 'job growth by 2032',
     majors: ['Graphic Design', 'Visual Communication', 'Fine Arts', 'Advertising'],
     dayInLife: 'Briefing call with a client in the morning, designing social assets in the afternoon, presenting concepts before end of day.',
+    employmentProbability: 64,
+    dimensions: [
+      { label: 'Interests', value: 84 },
+      { label: 'Skills', value: 76 },
+      { label: 'Personality', value: 72 },
+      { label: 'Work style', value: 70 },
+      { label: 'Academics', value: 66 },
+    ],
   },
 ]
 
@@ -126,63 +178,209 @@ const CERTIFICATIONS = [
   },
 ]
 
+const SECTIONS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'matches', label: 'Career matches' },
+  { id: 'roadmap', label: 'Roadmap' },
+  { id: 'certifications', label: 'Certifications' },
+]
+
 const Dashboard = () => {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
+  const [activeSection, setActiveSection] = useState('overview')
+  const [user, setUser] = useState<User | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const active = CAREER_MATCHES[activeTab]
   const top = CAREER_MATCHES[0]
+
+  useEffect(() => {
+    if (!isAuthenticated()) return
+    fetchCurrentUser()
+      .then(setUser)
+      .catch(() => setUser(null))
+  }, [])
+
+  // Account dropdown: close on outside click / Escape.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onPointerDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [menuOpen])
+
+  // Scrollspy: highlight the section nav link for the section in view.
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActiveSection(entry.target.id)
+        })
+      },
+      { rootMargin: '-45% 0px -50% 0px', threshold: 0 },
+    )
+    SECTIONS.forEach(({ id }) => {
+      const el = document.getElementById(id)
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  // Scroll-reveal: fade/slide content in as it enters the viewport.
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'))
+    if (!els.length) return
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible')
+            obs.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
+    )
+    els.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
+  const handleLogout = async () => {
+    await logout()
+    setUser(null)
+    setMenuOpen(false)
+    navigate('/')
+  }
+
+  const scrollToSection = (id: string) => (e: React.MouseEvent) => {
+    e.preventDefault()
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <div className="dashboard">
 
-      {/* ── Header ── */}
-      <header className="dash-header">
-        <Link to="/" className="dash-logo-link">
-          <img src={logo} alt="PathFinder" className="dash-logo" />
-        </Link>
-        <div className="dash-header-actions">
-          <Link to="/login" className="dash-header-btn">Log in</Link>
-          <Link to="/register" className="dash-header-btn dash-header-btn-primary">Save results</Link>
+      {/* ── Sticky top bar (brand + account + section nav) ── */}
+      <div className="dash-topbar">
+        <div className="dash-header">
+          <Link to="/" className="dash-logo-link">
+            <img src={logo} alt="PathFinder" className="dash-logo" />
+          </Link>
+          <div className="dash-header-actions">
+            {user ? (
+              <div className="dash-account" ref={menuRef}>
+                <button
+                  type="button"
+                  className="dash-avatar"
+                  onClick={() => setMenuOpen((open) => !open)}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  aria-label="Account menu"
+                  title={user.email}
+                >
+                  {getInitials(user.email)}
+                </button>
+                {menuOpen && (
+                  <div className="dash-account-menu" role="menu">
+                    <div className="dash-account-info">
+                      <span className="dash-account-caption">Signed in as</span>
+                      <span className="dash-account-email">{user.email}</span>
+                    </div>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="dash-account-logout"
+                      onClick={handleLogout}
+                    >
+                      Log out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link to="/login" className="dash-header-btn">Log in</Link>
+                <Link to="/register" className="dash-header-btn dash-header-btn-primary">Save results</Link>
+              </>
+            )}
+          </div>
         </div>
-      </header>
+
+        <nav className="dash-nav" aria-label="Dashboard sections">
+          <div className="dash-nav-inner">
+            {SECTIONS.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={scrollToSection(item.id)}
+                className={`dash-nav-link${activeSection === item.id ? ' is-active' : ''}`}
+                aria-current={activeSection === item.id ? 'true' : undefined}
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </nav>
+      </div>
 
       <main className="dash-main">
 
-        {/* ── 1. Celebration ── */}
-        <section className="dash-celebration">
-          <p className="dash-celebration-label">Your results are ready</p>
-          <h1 className="dash-celebration-title">
-            Your strongest match is <span className="dash-celebration-highlight">{top.title}.</span>
-          </h1>
-          <p className="dash-celebration-sub">
-            Based on your answers, we matched you against hundreds of career profiles. Here is what we found — and exactly what to do next.
-          </p>
-          <div className="dash-celebration-stats">
-            <div className="dash-stat">
-              <span className="dash-stat-value">{top.match}%</span>
-              <span className="dash-stat-label">match score</span>
+        {/* ── 1. Overview / hero ── */}
+        <section id="overview" className="dash-hero" data-reveal>
+          <div className="dash-hero-content">
+            <p className="dash-hero-eyebrow">
+              <span className="dash-hero-dot" /> Your results are ready
+            </p>
+            <h1 className="dash-hero-title">
+              Your strongest match is <span className="dash-hero-highlight">{top.title}</span>
+            </h1>
+            <p className="dash-hero-sub">
+              Based on your answers, we matched you against hundreds of career profiles. Here is what we found — and exactly what to do next.
+            </p>
+            <div className="dash-hero-stats">
+              <div className="dash-hero-stat">
+                <span className="dash-hero-stat-value">{top.match}<span className="dash-hero-stat-unit">%</span></span>
+                <span className="dash-hero-stat-label">Match score</span>
+              </div>
+              <span className="dash-hero-divider" aria-hidden="true" />
+              <div className="dash-hero-stat">
+                <span className="dash-hero-stat-value">{top.avgSalary}</span>
+                <span className="dash-hero-stat-label">Avg. starting salary</span>
+              </div>
+              <span className="dash-hero-divider" aria-hidden="true" />
+              <div className="dash-hero-stat">
+                <span className="dash-hero-stat-value">{top.growthRate}</span>
+                <span className="dash-hero-stat-label">{top.growthLabel}</span>
+              </div>
             </div>
-            <div className="dash-stat-divider" />
-            <div className="dash-stat">
-              <span className="dash-stat-value">{top.avgSalary}</span>
-              <span className="dash-stat-label">avg. starting salary</span>
-            </div>
-            <div className="dash-stat-divider" />
-            <div className="dash-stat">
-              <span className="dash-stat-value">{top.growthRate}</span>
-              <span className="dash-stat-label">{top.growthLabel}</span>
-            </div>
+          </div>
+          <div className="dash-hero-visual">
+            <CompatibilityGauge value={top.match} label="Top compatibility" sublabel={top.title} size={208} />
           </div>
         </section>
 
-        {/* ── 2. Career explorer ── */}
-        <section className="dash-section">
-          <div className="dash-section-header">
+        {/* ── 2. Career matches ── */}
+        <section id="matches" className="dash-section">
+          <header className="dash-section-header" data-reveal>
+            <span className="dash-eyebrow">01 — Explore</span>
             <h2 className="dash-section-title">Explore your matches</h2>
-            <p className="dash-section-sub">5 careers ranked by fit. Select each one to learn more.</p>
-          </div>
+            <p className="dash-section-sub">Five careers ranked by fit. Select each one to see the full breakdown.</p>
+          </header>
 
           {/* Tab bar */}
-          <div className="dash-tabs" role="tablist">
+          <div className="dash-tabs" role="tablist" aria-label="Career matches" data-reveal>
             {CAREER_MATCHES.map((c, i) => (
               <button
                 key={c.title}
@@ -198,7 +396,7 @@ const Dashboard = () => {
           </div>
 
           {/* Active career panel */}
-          <div className="dash-panel" role="tabpanel">
+          <div className="dash-panel" role="tabpanel" data-reveal>
             <div className="dash-panel-top">
               <div className="dash-panel-meta">
                 <span className="dash-panel-match">{active.match}% match</span>
@@ -233,24 +431,56 @@ const Dashboard = () => {
               <div className="dash-panel-majors">
                 <span className="dash-panel-majors-label">Suggested majors</span>
                 <div className="dash-panel-majors-list">
-                  {active.majors.map(m => (
+                  {active.majors.map((m) => (
                     <span key={m} className="dash-major-tag">{m}</span>
                   ))}
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Interactive compatibility visualisations */}
+          <div className="dash-viz">
+            <div className="dash-viz-card dash-viz-radar-card" data-reveal style={{ transitionDelay: '0ms' }}>
+              <span className="dash-viz-title">Your compatibility profile</span>
+              <span className="dash-viz-desc">
+                How your assessment answers align with what {active.title} demands.
+              </span>
+              <RadarChart data={active.dimensions} />
+            </div>
+
+            <div className="dash-viz-side">
+              <div className="dash-viz-card dash-viz-gauge-card" data-reveal style={{ transitionDelay: '120ms' }}>
+                <CompatibilityGauge value={active.match} label="Compatibility score" />
+                <span className="dash-viz-caption">
+                  Overall fit against this career's profile.
+                </span>
+              </div>
+              <div className="dash-viz-card dash-viz-gauge-card" data-reveal style={{ transitionDelay: '240ms' }}>
+                <CompatibilityGauge
+                  value={active.employmentProbability}
+                  label="Employment probability"
+                  sublabel="within 6 months"
+                  color="var(--pf-good)"
+                />
+                <span className="dash-viz-caption">
+                  Estimated chance of landing a role within 6 months of graduating, based on demand and {active.growthRate} projected growth.
+                </span>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* ── 3. Roadmap ── */}
-        <section className="dash-section">
-          <div className="dash-section-header">
+        <section id="roadmap" className="dash-section">
+          <header className="dash-section-header" data-reveal>
+            <span className="dash-eyebrow">02 — Plan</span>
             <h2 className="dash-section-title">Your personalised roadmap</h2>
             <p className="dash-section-sub">Five steps from where you are now to your first job.</p>
-          </div>
+          </header>
           <div className="dash-stepper">
             {ROADMAP.map((item, i) => (
-              <div key={item.step} className="dash-step">
+              <div key={item.step} className="dash-step" data-reveal style={{ transitionDelay: `${i * 90}ms` }}>
                 <div className="dash-step-left">
                   <div className="dash-step-dot">{item.step}</div>
                   {i < ROADMAP.length - 1 && <div className="dash-step-line" />}
@@ -268,21 +498,25 @@ const Dashboard = () => {
         </section>
 
         {/* ── 4. Certifications ── */}
-        <section className="dash-section">
-          <div className="dash-section-header">
+        <section id="certifications" className="dash-section">
+          <header className="dash-section-header" data-reveal>
+            <span className="dash-eyebrow">03 — Upskill</span>
             <h2 className="dash-section-title">Recommended certifications</h2>
             <p className="dash-section-sub">Three picks that hiring managers actually recognise. All completable alongside your studies.</p>
-          </div>
+          </header>
           <div className="dash-certs">
-            {CERTIFICATIONS.map(cert => (
+            {CERTIFICATIONS.map((cert, i) => (
               <a
                 key={cert.name}
                 href={cert.link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="dash-cert-card"
+                data-reveal
+                style={{ transitionDelay: `${i * 100}ms` }}
               >
                 <div className="dash-cert-top">
+                  <span className="dash-cert-badge" aria-hidden="true">{cert.provider[0]}</span>
                   <span className="dash-cert-name">{cert.name}</span>
                   <span className="dash-cert-provider">{cert.provider}</span>
                 </div>
@@ -307,17 +541,19 @@ const Dashboard = () => {
         </section>
 
         {/* ── 5. Save CTA ── */}
-        <section className="dash-save">
-          <p className="dash-save-eyebrow">Don't lose this</p>
-          <h2 className="dash-save-title">Save your roadmap for free</h2>
-          <p className="dash-save-desc">
-            Create an account to keep your results, track your progress through the roadmap, and retake the assessment any time your interests change.
-          </p>
-          <div className="dash-save-actions">
-            <Link to="/register" className="dash-save-primary">Create free account</Link>
-            <Link to="/" className="dash-save-secondary">Retake assessment</Link>
-          </div>
-        </section>
+        {!user && (
+          <section className="dash-save" data-reveal>
+            <p className="dash-save-eyebrow">Don't lose this</p>
+            <h2 className="dash-save-title">Save your roadmap for free</h2>
+            <p className="dash-save-desc">
+              Create an account to keep your results, track your progress through the roadmap, and retake the assessment any time your interests change.
+            </p>
+            <div className="dash-save-actions">
+              <Link to="/register" className="dash-save-primary">Create free account</Link>
+              <Link to="/" className="dash-save-secondary">Retake assessment</Link>
+            </div>
+          </section>
+        )}
 
       </main>
     </div>

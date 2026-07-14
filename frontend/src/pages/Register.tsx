@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import logo from '../assets/pathfinder-logo.png'
+import { register } from '../lib/auth'
 import './Register.css'
 
 const Register = () => {
@@ -8,13 +9,14 @@ const Register = () => {
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
     setError('')
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.email || !form.password) {
       setError('Please fill in all fields.')
@@ -24,8 +26,15 @@ const Register = () => {
       setError('Password must be at least 8 characters.')
       return
     }
-    // TODO: replace with real registration call
-    navigate('/dashboard')
+    setSubmitting(true)
+    try {
+      await register(form.email, form.password)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -99,7 +108,9 @@ const Register = () => {
 
           {error && <p className="register-error">{error}</p>}
 
-          <button type="submit" className="register-btn">Create account</button>
+          <button type="submit" className="register-btn" disabled={submitting}>
+            {submitting ? 'Creating account…' : 'Create account'}
+          </button>
         </form>
 
         <p className="register-footer">

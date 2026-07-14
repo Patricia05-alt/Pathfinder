@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import logo from '../assets/pathfinder-logo.png'
+import { login } from '../lib/auth'
 import './Login.css'
 
 const Login = () => {
@@ -8,20 +9,28 @@ const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
     setError('')
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.email || !form.password) {
       setError('Please fill in all fields.')
       return
     }
-    // TODO: replace with real auth call
-    navigate('/dashboard')
+    setSubmitting(true)
+    try {
+      await login(form.email, form.password)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -95,7 +104,9 @@ const Login = () => {
 
           {error && <p className="login-error">{error}</p>}
 
-          <button type="submit" className="login-btn">Log in</button>
+          <button type="submit" className="login-btn" disabled={submitting}>
+            {submitting ? 'Logging in…' : 'Log in'}
+          </button>
         </form>
 
         <p className="login-footer">
